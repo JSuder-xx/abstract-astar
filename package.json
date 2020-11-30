@@ -1,0 +1,26 @@
+{
+  "name": "abstract-astar",
+  "version": "0.1.0",
+  "description": "Versatile A* (A Star) implementation in TypeScript.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npx tsc -b",
+    "test": "npx jest"
+  },
+  "keywords": [
+    "A-Star",
+    "A*",
+    "Path finding",
+    "TypeScript",
+    "Abstract"
+  ],
+  "author": "John Suder",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^26.0.15",
+    "jest": "^26.6.3",
+    "ts-jest": "^26.4.4",
+    "typescript": "^4.1.2"
+  }
+}
