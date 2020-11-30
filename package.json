@@ -1,7 +1,9 @@
 {
+  "private": false,
   "name": "abstract-astar",
   "version": "0.1.0",
   "description": "Versatile A* (A Star) implementation in TypeScript.",
+  "repository": "https://github.com/JSuder-xx/abstract-astar.git",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -15,7 +17,7 @@
     "TypeScript",
     "Abstract"
   ],
-  "author": "John Suder",
+  "author": "John Suder",  
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^26.0.15",
