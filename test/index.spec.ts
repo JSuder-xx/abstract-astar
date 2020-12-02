@@ -79,42 +79,59 @@ const getNeighborsCurried = (map: Coord[][]) => {
 const sqr = (num: number) => num * num;
 
 describe(`AStar with 2D grid`, () => {
-  describe(`Given a 5x5 map with no obstacles`, () => {
-    const map: Coord[][] = zeroToFour.map((y) =>
-      zeroToFour.map((x) => ({ x, y }))
-    );
-    const getNeighbors = getNeighborsCurried(map);
+  type Scenario = {
+    given: { start: Coord; goal: Coord };
+    then: Coord[] | undefined;
+  };
+  type ScenarioAction = (scenario: Scenario) => void;
+  const map: Coord[][] = zeroToFour.map((y) =>
+    zeroToFour.map((x) => ({ x, y }))
+  );
+  const getNeighbors = getNeighborsCurried(map);
 
-    function scenario({
-      given,
-      then,
-    }: {
-      given: { start: Coord; goal: Coord };
-      then: Coord[] | undefined;
-    }) {
-      describe(`GIVEN start of ${JSON.stringify(
-        given.start
-      )} AND goal of ${JSON.stringify(given.goal)}`, () => {
-        it(`THEN expect path of be ${
-          then === undefined
-            ? `undefined`
-            : then.map((it) => JSON.stringify(it))
-        }`, () => {
-          const actual = aStar({
-            start: given.start,
-            goal: given.goal,
-            actualCostToMove: (_cameFromMap, from, to) =>
-              Math.sqrt(sqr(from.x - to.x) + sqr(from.y - to.y)),
-            estimateFromNodeToGoal: (current) =>
-              Math.abs(given.goal.x - current.x) +
-              Math.abs(given.goal.y - current.y),
-            neighborsAdjacentToNode: getNeighbors,
+  function given(obstacles: Coord[], then: (scenario: ScenarioAction) => void) {
+    describe(`Given a 5x5 map with ${
+      obstacles.length === 0
+        ? "no obstacles"
+        : `'obstacles at ${obstacles.map((it) => JSON.stringify(it))}`
+    }`, () => {
+      then(function scenario({
+        given,
+        then,
+      }: {
+        given: { start: Coord; goal: Coord };
+        then: Coord[] | undefined;
+      }) {
+        describe(`GIVEN start of ${JSON.stringify(
+          given.start
+        )} AND goal of ${JSON.stringify(given.goal)}`, () => {
+          it(`THEN expect path of be ${
+            then === undefined
+              ? `undefined`
+              : then.map((it) => JSON.stringify(it))
+          }`, () => {
+            const actual = aStar({
+              start: given.start,
+              goal: given.goal,
+              actualCostToMove: (_cameFromMap, from, to) =>
+                obstacles.some(
+                  (obstacle) => obstacle.x === to.x && obstacle.y === to.y
+                )
+                  ? Infinity
+                  : Math.sqrt(sqr(from.x - to.x) + sqr(from.y - to.y)),
+              estimateFromNodeToGoal: (current) =>
+                Math.abs(given.goal.x - current.x) +
+                Math.abs(given.goal.y - current.y),
+              neighborsAdjacentToNode: getNeighbors,
+            });
+            expect(actual).toStrictEqual(then);
           });
-          expect(actual).toStrictEqual(then);
         });
       });
-    }
+    });
+  }
 
+  given([], (scenario) => {
     scenario({
       given: {
         start: map[0][0],
@@ -147,4 +164,56 @@ describe(`AStar with 2D grid`, () => {
       then: [map[0][0], map[1][1], map[2][2], map[3][3], map[4][4]],
     });
   });
+
+  given([{ x: 1, y: 0 }], (scenario) => {
+    scenario({
+      given: {
+        start: map[0][0],
+        goal: map[0][4],
+      },
+      then: [
+        map[0][0],
+        /*here is where it goes diagonal to avoid the obstacle*/ map[1][1],
+        map[0][2],
+        map[0][3],
+        map[0][4],
+      ],
+    });
+
+    // it doesn't have to avoid any obstacles
+    scenario({
+      given: {
+        start: map[1][0],
+        goal: map[1][4],
+      },
+      then: [map[1][0], map[1][1], map[1][2], map[1][3], map[1][4]],
+    });
+  });
+
+  given(
+    [
+      { x: 1, y: 0 },
+      { x: 1, y: 1 },
+      { x: 0, y: 1 },
+    ],
+    (scenario) => {
+      // at 0, 0 it is completely boxed in the corner so no path possible
+      scenario({
+        given: {
+          start: map[0][0],
+          goal: map[0][4],
+        },
+        then: undefined,
+      });
+
+      // at row 2 it has a straight shot
+      scenario({
+        given: {
+          start: map[2][0],
+          goal: map[2][4],
+        },
+        then: [map[2][0], map[2][1], map[2][2], map[2][3], map[2][4]],
+      });
+    }
+  );
 });
