@@ -1,23 +1,48 @@
-const parent = (i: number) => Math.floor((i - 1) / 2);
-const left = (i: number) => 2 * i + 1;
-const right = (i: number) => 2 * i + 2;
+const parent = (index: number) => Math.floor((index - 1) / 2);
+const left = (index: number) => 2 * index + 1;
+const right = (index: number) => 2 * index + 2;
 
+/**
+ * A minimum-heap data structure ideal for the use case where
+ * - there are many writes relative to reads.
+ * - the only access requirement is to retrieve the item with the lowest value.
+ */
 export class MinHeap<Item> {
   private readonly _heapArray: Item[] = [];
   private readonly _itemToIndex = new Map<Item, number>();
 
-  constructor(private _getValue: (item: Item) => number) {}
+  constructor(
+    /** The scoring function which is used to order the item on the heap. */ private _getValue: (
+      item: Item
+    ) => number
+  ) {}
 
+  /**
+   * - If the item is not already present then insert
+   * - Otherwise re-balance the item
+   *
+   * Cost of O(log n).
+   **/
   public upsert(item: Item): void {
     const existingIndex = this._itemToIndex.get(item);
     if (existingIndex !== undefined) this._heapifyDownFromIndex(existingIndex);
     else this.insert(item);
   }
 
+  /**
+   * Returns true if the item is present in the heap.
+   *
+   * Cost of O(1) using Hash map.
+   */
   public contains(item: Item): boolean {
     return this._itemToIndex.get(item) !== undefined;
   }
 
+  /**
+   * Inserts the item into the heap. It does not check for existence so it is possible to add duplicate entries through this method.
+   *
+   * Cost of O(log n).
+   */
   public insert(item: Item): void {
     const { _getValue, _heapArray, _itemToIndex } = this;
 
@@ -37,6 +62,11 @@ export class MinHeap<Item> {
     }
   }
 
+  /**
+   * Removes the minimum item (top) from the heap.
+   *
+   * Cost O(log n)
+   */
   public removeMinimum(): Item | undefined {
     const { _heapArray, _itemToIndex } = this;
     if (_heapArray.length <= 0) return undefined;
@@ -92,12 +122,20 @@ export class MinHeap<Item> {
   }
 }
 
+/**
+ * Returns a single path (or undefined if a path could not be found) from a start to a goal.
+ *
+ * Makes no assumptions about node structure. Requires injection of functions which return the needed information.
+ *
+ * **⛔PERFORMANCE NOTE** You may wish to use memoization to cache results of functions such as neighborsAdjacentToNode if
+ * those functions are referentially transparent i.e. the result is always the same for the same inputs.
+ */
 export function aStar<Node>({
   start,
   goal,
   estimateFromNodeToGoal,
   neighborsAdjacentToNode,
-  actualCostToMove: costToMove,
+  actualCostToMove,
 }: {
   start: Node;
   goal: Node;
@@ -139,7 +177,7 @@ export function aStar<Node>({
     neighborsAdjacentToNode(current).forEach((neighbor) => {
       const actualCostToNeighbor =
         cheapestActualCostToCurrent +
-        costToMove(cameFromMap, current, neighbor);
+        actualCostToMove(cameFromMap, current, neighbor);
       const cheapestActualCostToNeighbor =
         cheapestActualCostFrom.get(neighbor) ?? Infinity;
       if (actualCostToNeighbor < cheapestActualCostToNeighbor) {
